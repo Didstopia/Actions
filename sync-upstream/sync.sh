@@ -107,7 +107,8 @@ if [[ $(git rev-parse HEAD) == $(git rev-parse upstream/${BRANCH}) ]]; then
     echo "synced=false" >> $GITHUB_OUTPUT
     exit 0
 else
-    echo "::info::Changes detected, proceeding with sync."fi
+    echo "::info::Changes detected, proceeding with sync."
+fi
 echo "::endgroup::"
 
 # Reset branch to match the upstream branch. If this fails, exit with an error.
