@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Enable script debugging.
-# set -x
+set -x
 
 # Check if current directory is a valid git repository.
 if [ ! -d ".git" ] || ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
@@ -100,13 +100,14 @@ echo "::endgroup::"
 
 # Check if the latest commit SHA from upstream branch matches the one in the current branch.
 echo "::group::Checking for changes to sync"
-if git rev-parse HEAD == git rev-parse upstream/${BRANCH}; then
-  # No changes to sync.
-  echo "::info::No changes detected. Branch ${BRANCH} is already up-to-date with upstream."
-  echo "synced=false" >> $GITHUB_OUTPUT
-  exit 0
+# if git rev-parse HEAD == git rev-parse upstream/${BRANCH}; then
+if [[ $(git rev-parse HEAD) == $(git rev-parse upstream/${BRANCH}) ]]; then
+    # No changes to sync.
+    echo "::info::No changes detected. Branch ${BRANCH} is already up-to-date with upstream."
+    echo "synced=false" >> $GITHUB_OUTPUT
+    exit 0
 else
-  echo "::info::Changes detected, proceeding with sync."fi
+    echo "::info::Changes detected, proceeding with sync."fi
 echo "::endgroup::"
 
 # Reset branch to match the upstream branch. If this fails, exit with an error.
