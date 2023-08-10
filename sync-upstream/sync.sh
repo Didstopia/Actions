@@ -74,14 +74,13 @@ if ! git remote set-url origin "https://x-access-token:${REPO_TOKEN}@github.com/
 fi
 echo "::endgroup::"
 
-## TODO: I suppose this is never necessary since we're pushing directly to the specified branch?
 # Ensure we're on the correct branch. If this fails, exit with an error.
-# echo "::group::Switching to branch ${BRANCH}"
-# if ! git checkout "${BRANCH}"; then
-#     echo "::error::Failed to switch to branch ${BRANCH}. Make sure the branch exists and that you have permissions to access it."
-#     exit 1
-# fi
-# echo "::endgroup::"
+echo "::group::Ensuring we are on branch ${BRANCH}"
+if ! git checkout "${BRANCH}"; then
+    echo "::error::Failed to switch to branch ${BRANCH}. Make sure the branch exists and that you have permissions to access it."
+    exit 1
+fi
+echo "::endgroup::"
 
 # Add remote upstream. If this fails, exit with an error.
 echo "::group::Adding upstream repository ${UPSTREAM_REPO}"
@@ -97,6 +96,17 @@ if ! git fetch upstream; then
     echo "::error::Failed to fetch from upstream repository ${UPSTREAM_REPO}. Make sure you have permissions to access it."
     exit 1
 fi
+echo "::endgroup::"
+
+# Check if the latest commit SHA from upstream branch matches the one in the current branch.
+echo "::group::Checking for changes to sync"
+if git rev-parse HEAD == git rev-parse upstream/${BRANCH}; then
+  # No changes to sync.
+  echo "::info::No changes detected. Branch ${BRANCH} is already up-to-date with upstream."
+  echo "synced=false" >> $GITHUB_OUTPUT
+  exit 0
+else
+  echo "::info::Changes detected, proceeding with sync."fi
 echo "::endgroup::"
 
 # Reset branch to match the upstream branch. If this fails, exit with an error.
@@ -115,4 +125,7 @@ if ! git push origin ${BRANCH} --force; then
 fi
 echo "::endgroup::"
 
+# Set the output variable to true to indicate that the branch was synced, then terminate.
+echo "synced=true" >> $GITHUB_OUTPUT
 echo "::info::Branch ${BRANCH} successfully synced with upstream repository ${UPSTREAM_REPO}."
+exit 0
