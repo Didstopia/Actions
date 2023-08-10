@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Enable script debugging.
-set -x
+# set -x
 
 # Check if current directory is a valid git repository.
 if [ ! -d ".git" ] || ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
@@ -105,6 +105,7 @@ if [[ $(git rev-parse HEAD) == $(git rev-parse upstream/${BRANCH}) ]]; then
     # No changes to sync.
     echo "::info::No changes detected. Branch ${BRANCH} is already up-to-date with upstream."
     echo "synced=false" >> $GITHUB_OUTPUT
+    echo "::endgroup::"
     exit 0
 else
     echo "::info::Changes detected, proceeding with sync."
