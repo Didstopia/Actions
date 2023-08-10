@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Enable script debugging.
-set -x
+# set -x
 
 # Check if current directory is a valid git repository.
 if [ ! -d ".git" ] || ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
@@ -66,13 +66,22 @@ if ! git config --global user.name "GitHub Actions"; then
 fi
 echo "::endgroup::"
 
-echo "::group::Setting up GitHub Token for repository ${GITHUB_REPOSITORY}"
 # Set the GitHub token for authentication
+echo "::group::Setting up GitHub Token for repository ${GITHUB_REPOSITORY}"
 if ! git remote set-url origin "https://x-access-token:${REPO_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"; then
     echo "::error::Failed to set the GitHub token for authentication. Make sure you have push access and that the GitHub Token is valid."
     exit 1
 fi
 echo "::endgroup::"
+
+## TODO: I suppose this is never necessary since we're pushing directly to the specified branch?
+# Ensure we're on the correct branch. If this fails, exit with an error.
+# echo "::group::Switching to branch ${BRANCH}"
+# if ! git checkout "${BRANCH}"; then
+#     echo "::error::Failed to switch to branch ${BRANCH}. Make sure the branch exists and that you have permissions to access it."
+#     exit 1
+# fi
+# echo "::endgroup::"
 
 # Add remote upstream. If this fails, exit with an error.
 echo "::group::Adding upstream repository ${UPSTREAM_REPO}"
