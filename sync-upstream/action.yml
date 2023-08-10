@@ -1,20 +1,23 @@
-name: 'Sync Upstream'
-description: 'Force syncs a branch from an upstream repository.'
+name: "Sync Upstream"
+description: "Force syncs a branch from an upstream repository."
 inputs:
   branch:
-    description: 'Branch to sync. Optional, defaults to the currently checked out branch.'
+    description: "Branch to sync. Optional, defaults to the currently checked out branch."
     required: false
   upstream-repo:
-    description: 'Upstream repository in the format owner/repo. Required, not set by default.'
+    description: "Upstream repository in the format owner/repo. Required, not set by default."
     required: true
   protected-branches:
-    description: 'Comma-separated list of branches that should not be synced. Defaults to "master,main,production".'
-    default: 'master,main,production'
+    description: 'Comma-separated list of branches that should not be synced. Defaults to `"master,main,production"`.'
     required: false
+    default: "master,main,production"
+  repo-token:
+    description: "GitHub token to use for authentication. Required, not set by default."
+    required: true
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
     - run: chmod +x ${{ github.action_path }}/sync.sh
       shell: bash
-    - run: ${{ github.action_path }}/sync.sh "${{ inputs.branch }}" "${{ inputs.upstream-repo }}" "${{ inputs.protected-branches }}"
+    - run: ${{ github.action_path }}/sync.sh "${{ inputs.branch }}" "${{ inputs.upstream-repo }}" "${{ inputs.protected-branches }}" "${{ inputs.repo-token }}"
       shell: bash

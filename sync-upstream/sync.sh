@@ -38,6 +38,19 @@ for protected in "${PROTECTED_BRANCHES[@]}"; do
     fi
 done
 
+# Get the GitHub Token from the input.
+REPO_TOKEN=${4}
+if [ -z "$REPO_TOKEN" ]; then
+    echo "::error::GitHub Token is invalid or not set. Please provide a valid GitHub Token with the 'repo' scope."
+    exit 1
+fi
+
+# Set the GitHub token for authentication
+if ! git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"; then
+    echo "::error::Failed to set the GitHub token for authentication. Make sure you have push access and that the GitHub Token is valid."
+    exit 1
+fi
+
 # Add remote upstream. If this fails, exit with an error.
 if ! git remote add upstream "https://github.com/$UPSTREAM_REPO.git"; then
     echo "::error::Failed to add remote upstream repository $UPSTREAM_REPO. Make sure the repository format or URL is correct."
