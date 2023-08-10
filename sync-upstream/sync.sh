@@ -1,8 +1,17 @@
 #!/usr/bin/env bash
 
-# Check if current directory is a valid git repository
+# Enable script debugging.
+set -x
+
+# Check if current directory is a valid git repository.
 if [ ! -d ".git" ] || ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
     echo "::error::The current directory doesn't appear to be a valid Git repository, the 'git' command is unavailable or an unexpected error occurred. Ensure that the 'checkout' action has run successfully before executing this action."
+    exit 1
+fi
+
+# Validate that we have GITHUB_REPOSITORY set.
+if [ -z "$GITHUB_REPOSITORY" ]; then
+    echo "::error::GITHUB_REPOSITORY is not set. Something went wrong."
     exit 1
 fi
 
@@ -33,7 +42,7 @@ fi
 # Safety Check: If the branch is in the list of protected branches, exit.
 for protected in "${PROTECTED_BRANCHES[@]}"; do
     if [ "$BRANCH" == "$protected" ]; then
-        echo "::error::$BRANCH is a protected branch and cannot be synced!"
+        echo "::error::${BRANCH} is a protected branch and cannot be synced!"
         exit 1
     fi
 done
@@ -45,34 +54,56 @@ if [ -z "$REPO_TOKEN" ]; then
     exit 1
 fi
 
+# Set up Git credentials
+echo "::group::Setting up git credentials"
+if ! git config --global user.email "actions@github.com"; then
+    echo "::error::Failed to configure git user email."
+    exit 1
+fi
+if ! git config --global user.name "GitHub Actions"; then
+    echo "::error::Failed to configure git user name."
+    exit 1
+fi
+echo "::endgroup::"
+
+echo "::group::Setting up GitHub Token for repository ${GITHUB_REPOSITORY}"
 # Set the GitHub token for authentication
-if ! git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"; then
+if ! git remote set-url origin "https://x-access-token:${REPO_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"; then
     echo "::error::Failed to set the GitHub token for authentication. Make sure you have push access and that the GitHub Token is valid."
     exit 1
 fi
+echo "::endgroup::"
 
 # Add remote upstream. If this fails, exit with an error.
-if ! git remote add upstream "https://github.com/$UPSTREAM_REPO.git"; then
-    echo "::error::Failed to add remote upstream repository $UPSTREAM_REPO. Make sure the repository format or URL is correct."
+echo "::group::Adding upstream repository ${UPSTREAM_REPO}"
+if ! git remote add upstream "https://github.com/${UPSTREAM_REPO}.git"; then
+    echo "::error::Failed to add remote upstream repository ${UPSTREAM_REPO}. Make sure the repository format or URL is correct."
     exit 1
 fi
+echo "::endgroup::"
 
 # Fetch from upstream. If this fails, exit with an error.
+echo "::group::Fetching changes from upstream repository ${UPSTREAM_REPO}"
 if ! git fetch upstream; then
-    echo "::error::Failed to fetch from upstream repository $UPSTREAM_REPO. Make sure you have permissions to access it."
+    echo "::error::Failed to fetch from upstream repository ${UPSTREAM_REPO}. Make sure you have permissions to access it."
     exit 1
 fi
+echo "::endgroup::"
 
 # Reset branch to match the upstream branch. If this fails, exit with an error.
-if ! git reset --hard upstream/$BRANCH; then
-    echo "::error::Failed to reset the branch $BRANCH. Make sure the branch $BRANCH exists in the upstream repository $UPSTREAM_REPO."
+echo "::group::Resetting branch ${BRANCH} to match upstream repository ${UPSTREAM_REPO}"
+if ! git reset --hard upstream/${BRANCH}; then
+    echo "::error::Failed to reset the branch ${BRANCH}. Make sure the branch ${BRANCH} exists in the upstream repository ${UPSTREAM_REPO}."
     exit 1
 fi
+echo "::endgroup::"
 
 # Push to the forked repository. If this fails, exit with an error.
-if ! git push origin $BRANCH --force; then
+echo "::group::Pushing changes to forked repository ${GITHUB_REPOSITORY}"
+if ! git push origin ${BRANCH} --force; then
     echo "::error::Failed to push changes. Make sure you have push access and ensure that your inputs correctly set and valid."
     exit 1
 fi
+echo "::endgroup::"
 
-echo "::info::Branch $BRANCH successfully synced with upstream repository $UPSTREAM_REPO."
+echo "::info::Branch ${BRANCH} successfully synced with upstream repository ${UPSTREAM_REPO}."
