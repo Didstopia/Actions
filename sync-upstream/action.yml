@@ -14,6 +14,10 @@ inputs:
   repo-token:
     description: "GitHub token to use for authentication. Required, not set by default."
     required: true
+  fetch-depth:
+    description: 'Number of commits to fetch. Set to `"0"` for full history. Optional, defaults to `"1"`.'
+    required: false
+    default: "1"
 outputs:
   synced:
     description: "Indicates whether changes were detected and synced from the upstream repository."
@@ -23,6 +27,6 @@ runs:
   steps:
     - run: chmod +x ${{ github.action_path }}/sync.sh
       shell: bash
-    - run: ${{ github.action_path }}/sync.sh "${{ inputs.branch }}" "${{ inputs.upstream-repo }}" "${{ inputs.protected-branches }}" "${{ inputs.repo-token }}"
+    - run: ${{ github.action_path }}/sync.sh "${{ inputs.branch }}" "${{ inputs.upstream-repo }}" "${{ inputs.protected-branches }}" "${{ inputs.repo-token }}" "${{ inputs.fetch-depth }}"
       shell: bash
       id: sync-step
